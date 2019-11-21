@@ -1,0 +1,76 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  ports:
+  - name: http
+    port: 8000
+    # Target is now sigsci-agent on port 8001
+    targetPort: 8001
+  selector:
+    app: nginx-deployment
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      # Example nginx running on port 8080
+      - name: nginx
+        image: nginx:1.7.9
+        #args:
+        # Address for the app to listen on
+        #- localhost:80
+        ports:
+        - containerPort: 80
+      # Signal Sciences Agent running in reverse proxy mode (SIGSCI_REVPROXY_LISTENER configured)
+      - name: sigsci-agent
+        image: signalsciences/sigsci-agent:latest
+        imagePullPolicy: Always
+        env:
+        - name: SIGSCI_ACCESSKEYID
+          valueFrom:
+            secretKeyRef:
+              name: sigsci.helloworldsecret
+              key: accesskeyid
+        - name: SIGSCI_SECRETACCESSKEY
+          valueFrom:
+            secretKeyRef:
+              name: sigsci.helloworldsecret
+              key: secretaccesskey
+        # Configure the revproxy listener to listen on the new service port 8001
+        # forwarding to the app on 8000 as the upstream
+        - name: SIGSCI_REVPROXY_LISTENER
+          value: "http:{listener='http://0.0.0.0:8001',upstreams='http://127.0.0.1:80',access-log='/dev/stdout'}"
+        ports:
+        - containerPort: 8001
+        securityContext:
+          # The sigsci-agent container should run with its root filesystem read only
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        # Default volume mount location for sigsci-agent writeable data
+        # NOTE: Also change `SIGSCI_SHARED_CACHE_DIR` (default `/sigsci/tmp/cache`)
+        #       if mountPath is changed, but best not to change.
+        - name: sigsci-tmp
+          mountPath: /sigsci/tmp
+      volumes:
+      # Define a volume where sigsci-agent will write temp data and share the socket file,
+      # which is required with the root filesystem is mounted read only
+      - name: sigsci-tmp
+        emptyDir: {}

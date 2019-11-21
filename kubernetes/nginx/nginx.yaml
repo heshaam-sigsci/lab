@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  ports:
+  - name: http
+    port: 80
+    # Target is now sigsci-agent on port 8001
+    targetPort: 80
+  selector:
+    app: nginx-deployment
+  type: NodePort
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      # Example nginx running on port 8080
+      - name: nginx
+        image: nginx:1.7.9
