@@ -1,0 +1,22 @@
+FROM centos:7
+
+RUN yum install -y sudo vim
+
+COPY /contrib/sigsci.repo /etc/yum.repos.d/sigsci.repo
+
+RUN mkdir /etc/ssl/nginx && cd /etc/ssl/nginx
+COPY nginx-repo.crt /etc/ssl/nginx/
+COPY nginx-repo.key /etc/ssl/nginx/
+
+RUN yum install -y ca-certificates wget
+RUN wget -P /etc/yum.repos.d https://cs.nginx.com/static/files/nginx-plus-7.4.repo 
+RUN yum install -y nginx-plus-18
+
+RUN yum install -y nginx-plus-module-ndk-18+0.3.0
+RUN yum install -y nginx-module-sigsci-nxp-1.15.10*
+
+COPY contrib/nginx.conf /etc/nginx/
+
+COPY start.sh /start.sh
+RUN chmod +x start.sh
+ENTRYPOINT ["/start.sh"]
