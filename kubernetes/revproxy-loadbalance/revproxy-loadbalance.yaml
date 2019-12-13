@@ -1,46 +1,53 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: nginx-deployment
+  name: helloworld
   labels:
-    app: nginx-deployment
+    app: helloworld
 spec:
   ports:
   - name: http
-    port: 8000
+    port: 80
     # Target is now sigsci-agent on port 8001
     targetPort: 8001
   selector:
-    app: nginx-deployment
+    app: helloworld
   type: LoadBalancer
 ---
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: nginx-deployment
+  name: helloworld
   labels:
-    app: nginx-deployment
+    app: helloworld
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
-      app: nginx-deployment
+      app: helloworld
   template:
     metadata:
       labels:
-        app: nginx-deployment
+        app: helloworld
     spec:
       containers:
-      # Example nginx running on port 8080
-      - name: nginx
-        #image: nginx:1.7.9
-        image: nginxport800
+      # Example helloworld app running on port 8000
+      - name: helloworld
+        image: signalsciences/example-helloworld:latest
         imagePullPolicy: IfNotPresent
+        args:
+        # Address for the app to listen on
+        - localhost:8000
+        ports:
+        - containerPort: 8000
+        # Example nginx running on port 80
+      - name: nginx
+        image: nginx:1.7.9
         #args:
         # Address for the app to listen on
         #- localhost:80
         ports:
-        - containerPort: 800
+        - containerPort: 80
       # Signal Sciences Agent running in reverse proxy mode (SIGSCI_REVPROXY_LISTENER configured)
       - name: sigsci-agent
         image: signalsciences/sigsci-agent:latest
@@ -59,7 +66,8 @@ spec:
         # Configure the revproxy listener to listen on the new service port 8001
         # forwarding to the app on 8000 as the upstream
         - name: SIGSCI_REVPROXY_LISTENER
-          value: "http:{listener='http://0.0.0.0:8001',upstreams='http://127.0.0.1:800',access-log='/dev/stdout'}"
+          #value: "http:{listener='http://0.0.0.0:8001',upstreams='http://127.0.0.1:8000,http://127.0.0.1:80',access-log='/dev/stdout'}"
+          value: "example1:{listener='http://0.0.0.0:8001',upstreams='http://127.0.0.1:80,http://127.0.0.1:8000',access-log='/dev/stdout'}; example2:{listener='http://0.0.0.0:8002',upstreams='http://127.0.0.1:80,http://127.0.0.1:8000',access-log='/dev/stdout'}"
         ports:
         - containerPort: 8001
         securityContext:
