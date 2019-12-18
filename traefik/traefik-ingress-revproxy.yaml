@@ -1,0 +1,76 @@
+apiVersion: extensions/v1beta1
+kind: DaemonSet
+metadata:
+  name: traefik-ingress-controller
+  namespace: lb
+spec:
+  updateStrategy:
+    type: RollingUpdate
+  template:
+    metadata:
+      labels:
+        name: traefik-ingress-controller
+    spec:
+      terminationGracePeriodSeconds: 60
+      volumes:
+        - name: config
+          configMap:
+            name: traefik-conf
+        - name: ssl
+          secret:
+            secretName: tls-secret
+        - name: sigsci-tmp
+          emptyDir: {}
+      containers:
+        - image: traefik:{{.Values.imageTag}}
+          name: traefik-ingress-lb
+          volumeMounts:
+          - mountPath: "/ssl"
+            name: "ssl"
+          - mountPath: "/config"
+            name: "config"
+          ports:
+          - containerPort: 80
+          - containerPort: 443
+          - containerPort: 8080
+          resources:
+            limits:
+              #cpu: 500m
+              memory: 1024Mi
+            requests:
+              cpu: 100m
+              memory: 300Mi
+          args:
+          - --configfile=/config/traefik.toml
+          - --web
+          - --kubernetes
+          - --logLevel=INFO
+        # Signal Sciences Agent running in reverse proxy mode (SIGSCI_REVPROXY_LISTENER configured)
+        - name: sigsci-agent
+          image: signalsciences/sigsci-agent:latest
+          imagePullPolicy: Always
+          env:
+          - name: SIGSCI_ACCESSKEYID
+            value: {{.Values.accesskeyid}}
+          - name: SIGSCI_SECRETACCESSKEY
+            value: {{.Values.secretaccesskey}}
+          # Configure the revproxy listener to listen on the new service port 8001
+          # forwarding to the app on 8000 as the upstream
+          - name: SIGSCI_REVPROXY_LISTENER
+            value: "example1:{listener='http://0.0.0.0:9080',upstreams='http://127.0.0.1:80',access-log='/dev/stdout',minimal-header-rewriting='true'}; example2:{listener='https://0.0.0.0:9443',upstreams='https://127.0.0.1:443',tls-cert='/ssl/tls.crt',tls-key='/ssl/tls.key',access-log='/dev/stdout',minimal-header-rewriting='true',tls-insecure-skip-verify='true'}"
+          ports:
+          - containerPort: 9080
+            hostPort: 9080
+          - containerPort: 9443
+            hostPort: 9443
+          securityContext:
+            # The sigsci-agent container should run with its root filesystem read only
+            readOnlyRootFilesystem: true
+          volumeMounts:
+          # Default volume mount location for sigsci-agent writeable data
+          # NOTE: Also change `SIGSCI_SHARED_CACHE_DIR` (default `/sigsci/tmp/cache`)
+          #       if mountPath is changed, but best not to change.
+          - name: sigsci-tmp
+            mountPath: /sigsci/tmp
+          - mountPath: "/ssl"
+            name: "ssl"
