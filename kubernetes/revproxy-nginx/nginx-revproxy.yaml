@@ -34,7 +34,7 @@ spec:
       # Example nginx running on port 8080
       - name: nginx
         #image: nginx:1.7.9
-        image: nginxport800
+        image: nginxport800:latest
         imagePullPolicy: IfNotPresent
         #args:
         # Address for the app to listen on

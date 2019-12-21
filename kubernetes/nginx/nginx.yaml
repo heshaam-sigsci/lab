@@ -12,7 +12,7 @@ spec:
     targetPort: 80
   selector:
     app: nginx-deployment
-  type: NodePort
+  type: LoadBalancer
 ---
 apiVersion: apps/v1
 kind: Deployment
@@ -31,6 +31,47 @@ spec:
         app: nginx-deployment
     spec:
       containers:
-      # Example nginx running on port 8080
+      # Example nginx running on port 80
       - name: nginx
-        image: nginx:1.7.9
+        image: nginxplus:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        # Shared mount with sigsci-agent container where the socket is shared via emptyDir volume
+        - name: sigsci-tmp
+          mountPath: /var/run
+      # Signal Sciences Agent running in default RPC mode
+      - name: sigsci-agent
+        image: signalsciences/sigsci-agent:latest
+        imagePullPolicy: Always
+        env:
+        - name: SIGSCI_ACCESSKEYID
+          valueFrom:
+            secretKeyRef:
+              name: sigsci.helloworldsecret
+              key: accesskeyid
+        - name: SIGSCI_SECRETACCESSKEY
+          valueFrom:
+            secretKeyRef:
+              name: sigsci.helloworldsecret
+              key: secretaccesskey
+        # If required (default is /sigsci/tmp/sigsci.sock for the container)
+        #- name: SIGSCI_RPC_ADDRESS
+        #  value: /path/to/socket for UDS OR host:port if TCP
+        - name: SIGSCI_RPC_ADDRESS
+          value: unix:/var/run/sigsci.sock
+        securityContext:
+          # The sigsci-agent container should run with its root filesystem read only
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        # Default volume mount location for sigsci-agent writeable data
+        # NOTE: Also change `SIGSCI_SHARED_CACHE_DIR` (default `/sigsci/tmp/cache`)
+        #       if mountPath is changed, but best not to change.
+        - name: sigsci-tmp
+          mountPath: /var/run
+      volumes:
+      # Define a volume where sigsci-agent will write temp data and share the socket file,
+      # which is required with the root filesystem is mounted read only
+      - name: sigsci-tmp
+        emptyDir: {}
