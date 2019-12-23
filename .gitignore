@@ -1,0 +1,6 @@
+*.crt
+*.key
+
+docker-compose/openresty-caching-example-sigsci/
+docker-compose/sigsci-nginx-sidecar-master/
+sigsci-nginx-plus-amazonlinux/
