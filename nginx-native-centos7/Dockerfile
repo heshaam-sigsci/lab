@@ -7,7 +7,7 @@ COPY /app/sigsci.repo /etc/yum.repos.d/sigsci.repo
 COPY /app/nginx.repo /etc/yum.repos.d/nginx.repo
 RUN yum -y update
 
-RUN yum -y install nginx
+RUN yum -y install nginx-1.17.6
 
 # Step 2 - Install the Signal Sciences Agent Package
 RUN yum -y install sigsci-agent
