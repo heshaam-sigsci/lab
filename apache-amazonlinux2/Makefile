@@ -1,7 +1,7 @@
 DOCKERUSER?=sigsci
-DOCKERNAME?=sigsci-apache-centos7
+DOCKERNAME?=sigsci-apache-amazonlinux2
 DOCKERTAG?=latest
-SIGSCI_HOSTNAME?=apache-centos7
+SIGSCI_HOSTNAME?=apache-amazonlinux2
 EXPOSE_PORT?=4000
 AGENT_CONF?=$(shell pwd)/agent.conf
 
