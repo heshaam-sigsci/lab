@@ -33,14 +33,15 @@ spec:
       containers:
       # Example nginx running on port 8080
       - name: nginx
-        #image: nginx:1.7.9
-        image: nginxport3200:latest
+        image: nginx:1.7.9
+        #image: nginxport3200:latest
         imagePullPolicy: IfNotPresent
         #args:
         # Address for the app to listen on
         #- localhost:80
         ports:
-        - containerPort: 3200
+        - containerPort: 80
+        #- containerPort: 3200
       # Signal Sciences Agent running in reverse proxy mode (SIGSCI_REVPROXY_LISTENER configured)
       - name: sigsci-agent
         image: signalsciences/sigsci-agent:latest
@@ -49,17 +50,17 @@ spec:
         - name: SIGSCI_ACCESSKEYID
           valueFrom:
             secretKeyRef:
-              name: sigsci.helloworldsecret
+              name: sigsci.my-site-name-here
               key: accesskeyid
         - name: SIGSCI_SECRETACCESSKEY
           valueFrom:
             secretKeyRef:
-              name: sigsci.helloworldsecret
+              name: sigsci.my-site-name-here
               key: secretaccesskey
         # Configure the revproxy listener to listen on the new service port 8001
         # forwarding to the app on 8000 as the upstream
         - name: SIGSCI_REVPROXY_LISTENER
-          value: "http:{listener='http://0.0.0.0:8001',upstreams='http://127.0.0.1:3200',access-log='/dev/stdout'}"
+          value: "http:{listener='http://0.0.0.0:8001',upstreams='http://127.0.0.1:80',access-log='/dev/stdout'}"
         ports:
         - containerPort: 8001
         securityContext:
