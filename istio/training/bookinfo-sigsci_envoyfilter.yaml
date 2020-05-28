@@ -1,0 +1,104 @@
+# The following adds the required envoy configuration into the istio-proxy configuration
+apiVersion: networking.istio.io/v1alpha3
+kind: EnvoyFilter
+metadata:
+  # This needs adjusted to be the app name protected by sigsci
+  name: productpage
+spec:
+  workloadSelector:
+    labels:
+      # This needs adjusted to be the app name protected by sigsci
+      app: productpage
+ 
+  # Patch the envoy configuration, adding in the required sigsci config
+  configPatches:
+ 
+  # Adds the ext_authz HTTP filter for the sigsci-agent ext_authz API
+  - applyTo: HTTP_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        name: virtualInbound
+        filterChain:
+          filter:
+            name: "envoy.http_connection_manager"
+    patch:
+      operation: INSERT_BEFORE
+      value:
+        # Configure the envoy.ext_authz here:
+        name: envoy.ext_authz
+        config:
+          grpc_service:
+            # NOTE: *SHOULD* use envoy_grpc as ext_authz can use dynamic clusters and has connection pooling
+            envoy_grpc:
+              cluster_name: sigsci-agent-grpc
+            timeout: 0.2s
+          failure_mode_allow: false
+          with_request_body:
+            max_request_bytes: 8192
+            allow_partial_message: true
+ 
+  # Adds the access_log entry for the sigsci-agent http_grpc_access_log API
+  - applyTo: NETWORK_FILTER
+    match:
+      context: SIDECAR_INBOUND
+      listener:
+        name: virtualInbound
+        filterChain:
+          filter:
+            name: "envoy.http_connection_manager"
+    patch:
+      operation: MERGE
+      value:
+        name: "envoy.http_connection_manager"
+        typed_config:
+          "@type": "type.googleapis.com/envoy.config.filter.network.http_connection_manager.v2.HttpConnectionManager"
+          access_log:
+          # Configure the envoy.http_grpc_access_log here:
+          - name: "envoy.http_grpc_access_log"
+            config: 
+              common_config:
+                log_name: "sigsci-agent-grpc"
+                grpc_service:
+                  # NOTE: *MUST* use google_grpc as envoy_grpc cannot handle a dynamic cluster for ALS (yet)
+                  google_grpc:
+                    # The address *MUST* be 127.0.0.1 so that communication is intra-pod
+                    # Configure the sigsci-agent port number here:
+                    target_uri: 127.0.0.1:9999
+                    stat_prefix: "sigsci-agent"
+                  timeout: 0.2s
+              additional_request_headers_to_log:
+              # These are required:
+              - "x-sigsci-request-id"
+              - "x-sigsci-waf-response"
+              # These are additional you want recorded:
+              - "accept"
+              - "content-type"
+              - "content-length"
+              additional_response_headers_to_log:
+              # These are additional you want recorded:
+              - "date"
+              - "server"
+              - "content-type"
+              - "content-length"
+ 
+  # Adds a dynamic cluster for the sigsci-agent via CDS for sigsci-agent ext_authz API
+  - applyTo: CLUSTER
+    patch:
+      operation: ADD
+      value:
+        name: sigsci-agent-grpc
+        type: STRICT_DNS
+        connect_timeout: 0.5s
+        http2_protocol_options: {}
+        load_assignment:
+          cluster_name: sigsci-agent-grpc
+          endpoints:
+          - lb_endpoints:
+            - endpoint:
+                address:
+                  socket_address:
+                    # The address *MUST* be 127.0.0.1 so that communication is intra-pod
+                    address: 127.0.0.1
+                    # Configure the agent port here:
+                    port_value: 9999
