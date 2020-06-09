@@ -3,7 +3,7 @@ FROM centos:7
 RUN yum -y upgrade
 RUN yum -y install httpd sed curl vim sudo
 RUN yum install -y apt-transport-https wget
-RUN yum update
+RUN yum -y update
 
 # Set up some server stuff
 RUN mkdir /app && mkdir /etc/sigsci
