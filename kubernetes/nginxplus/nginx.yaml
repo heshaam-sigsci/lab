@@ -33,7 +33,8 @@ spec:
       containers:
       # Example nginx running on port 80
       - name: nginx
-        image: nginxplus:latest
+        #image: nginx:latest
+        image: nginx-native-ubuntu:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 80
@@ -56,6 +57,10 @@ spec:
             secretKeyRef:
               name: sigsci.helloworldsecret
               key: secretaccesskey
+        #- name: SIGSCI_LOG_OUT
+        #  value: /etc/sigsci/agent.log
+        #- name: SIGSCI_DEBUG_LOG_ALL_THE_THINGS
+        #  value: "true"
         # If required (default is /sigsci/tmp/sigsci.sock for the container)
         #- name: SIGSCI_RPC_ADDRESS
         #  value: /path/to/socket for UDS OR host:port if TCP
