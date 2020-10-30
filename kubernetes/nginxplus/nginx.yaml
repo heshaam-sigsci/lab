@@ -75,6 +75,7 @@ spec:
         #       if mountPath is changed, but best not to change.
         - name: sigsci-tmp
           mountPath: /var/run
+          #mountPath: /sigsci/tmp #can use this if remove SIGSCI_RPC_ADDRESS env variable
       volumes:
       # Define a volume where sigsci-agent will write temp data and share the socket file,
       # which is required with the root filesystem is mounted read only
