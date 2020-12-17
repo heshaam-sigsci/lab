@@ -1,0 +1,41 @@
+version: '3.7'
+
+services:
+    nginx:
+        image: reverseproxy:latest
+        build:
+            context: ./nginx
+            dockerfile: Dockerfile
+        volumes:
+          - ./nginx/nginx.conf:/usr/local/openresty/nginx/conf/nginx.conf
+          - ./nginx/sigsci.conf:/opt/sigsci/nginx/sigsci.conf
+          - sigscisock:/sigsci/tmp/
+        ports:
+            - 8080:80
+        restart: always
+        #environment:
+            #- SIGSCI_DEBUG_LOG_ALL_THE_THINGS=true
+    goapp:
+        image: goapp:latest
+        build:
+            context: ./go
+            dockerfile: Dockerfile
+        restart: always
+    sigsciagent:
+        image: sigsciagent:latest
+        build:
+            context: ./sigsciagent
+            dockerfile: Dockerfile
+        restart: always
+        environment:
+            - SIGSCI_RPC_ADDRESS=0.0.0.0:8001 #no quotes
+            #- SIGSCI_RPC_ADDRESS=/sigsci/tmp/sigsci.sock
+            #- SIGSCI_DEBUG_LOG_ALL_THE_THINGS=true
+            - SIGSCI_ACCESSKEYID=REPLACE_ME
+            - SIGSCI_SECRETACCESSKEY=REPLACE_ME
+            - SIGSCI_DEBUG_LOG_WEB_INPUTS=1
+        volumes:
+            - sigscisock:/sigsci/tmp/
+
+volumes:
+    sigscisock:

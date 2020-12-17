@@ -1,0 +1,3 @@
+[submodule "sigsci-sidecar-alpine"]
+	path = sigsci-sidecar-alpine
+	url = https://github.com/ajahoda/sigsci-sidecar-alpine

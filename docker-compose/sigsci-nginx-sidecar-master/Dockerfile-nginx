@@ -1,0 +1,12 @@
+FROM openresty/openresty:stretch
+
+RUN apt-get update
+RUN apt-get install -y apt-transport-https wget gnupg
+RUN wget -qO - https://apt.signalsciences.net/gpg.key | apt-key add -
+COPY contrib/sigsci-release.list /etc/apt/sources.list.d/sigsci-release.list
+RUN apt-get update
+
+RUN apt-get install sigsci-module-nginx
+
+COPY contrib/sigsci.conf /etc/nginx/conf.d/
+
