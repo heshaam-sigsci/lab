@@ -1,0 +1,36 @@
+https://docs.konghq.com/install/docker/
+https://docs.konghq.com/2.0.x/db-less-and-declarative-config/#the-declarative-configuration-format
+https://github.com/zoobab/kong-declarative-config
+
+
+curl -i -X POST --url http://127.0.0.1:8001/plugins/ --data 'name=signalsciences'
+curl -i -k -X POST --url https://127.0.0.1:8444/plugins/ --data 'name=signalsciences'
+
+#Configure a service
+curl -i -X POST \
+  --url http://127.0.0.1:8001/services/ \
+  --data 'name=example-service' \
+  --data 'url=http://mockbin.org'
+
+curl -i -k -X POST \
+  --url https://127.0.0.1:8444/services/ \
+  --data 'name=example-service' \
+  --data 'url=http://mockbin.org'
+
+#Add route for the service
+curl -i -X POST \
+  --url http://127.0.0.1:8001/services/example-service/routes \
+  --data 'hosts[]=example.com'
+
+curl -i -k -X POST \
+  --url https://127.0.0.1:8444/services/example-service/routes \
+  --data 'hosts[]=example.com'
+
+#Forward requests through Kong
+curl -i -X GET \
+  --url http://127.0.0.1:8000/ \
+  --header 'Host: example.com'
+
+curl -i -X GET \
+  --url http://192.168.99.103:30045/ \
+  --header 'Host: example.com'
