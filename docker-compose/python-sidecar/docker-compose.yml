@@ -1,0 +1,22 @@
+version: '3'
+services:
+  sigsci-agent-sidecar:
+    build: 
+     context: ./sigsci-sidecar-centos
+     dockerfile: Dockerfile
+    environment:
+     - SIGSCI_ACCESSKEYID=f99f90c6-8ff0-44d4-b07d-99af09fc51e1
+     - SIGSCI_SECRETACCESSKEY=qNx_vUapXJ6Sk7stwT_igJtLTN3M8uQj_QO9cDhfp9E
+    volumes:
+      - "varrun:/var/run/"
+  python-debian:
+    build:
+      context: .
+      dockerfile: Dockerfile-python
+    ports:
+     - "4000:5000"
+    volumes:
+      - "varrun:/var/run/"
+
+volumes:
+  varrun:
