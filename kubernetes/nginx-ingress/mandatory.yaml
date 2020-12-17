@@ -86,6 +86,7 @@ rules:
       - watch
   - apiGroups:
       - "extensions"
+      - "networking.k8s.io" #added this
     resources:
       - ingresses
     verbs:
@@ -215,7 +216,8 @@ spec:
       containers:
         - name: nginx-ingress-controller
           #image: signalsciences/sigsci-nginx-ingress-controller:0.30.0
-          image: nginxingress:latest
+          image: quay.io/kubernetes-ingress-controller/nginx-ingress-controller:0.33.0
+          #image: nginxingress:latest
           imagePullPolicy: IfNotPresent
           args:
             - /nginx-ingress-controller
@@ -233,7 +235,7 @@ spec:
                 - NET_BIND_SERVICE
             # www-data -> 33
             # root -> 101
-            runAsUser: 33
+            runAsUser: 101
           env:
             - name: POD_NAME
               valueFrom:
@@ -275,17 +277,19 @@ spec:
           imagePullPolicy: IfNotPresent
           env:
           - name: SIGSCI_ACCESSKEYID
-            valueFrom:
-              secretKeyRef:
+            value: f99f90c6-8ff0-44d4-b07d-99af09fc51e1
+            #valueFrom:
+            #  secretKeyRef:
                 # This secret needs added (see docs on sigsci secrets)
-                name: sigsci.nginx-ingress-keys
-                key: accesskeyid
+            #    name: sigsci.nginx-ingress-keys
+            #    key: accesskeyid
           - name: SIGSCI_SECRETACCESSKEY
-            valueFrom:
-              secretKeyRef:
+            value: qNx_vUapXJ6Sk7stwT_igJtLTN3M8uQj_QO9cDhfp9E
+            #valueFrom:
+            #  secretKeyRef:
                 # This secret needs added (see docs on sigsci secrets)
-                name: sigsci.nginx-ingress-keys
-                key: secretaccesskey
+            #    name: sigsci.nginx-ingress-keys
+            #    key: secretaccesskey
           securityContext:
             # The sigsci-agent container should run with its root filesystem read only
             readOnlyRootFilesystem: true
