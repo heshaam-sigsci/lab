@@ -5,3 +5,4 @@
 #docker-compose/sigsci-nginx-sidecar-master/
 #sigsci-nginx-plus-amazonlinux/
 istio/istio-*
+.DS_store
