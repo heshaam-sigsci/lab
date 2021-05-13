@@ -12,4 +12,5 @@ RUN chmod +x /app/start.sh
 COPY app/httpd.conf /etc/apache2/httpd.conf
 COPY app/default.conf /etc/apache2/sites-enabled/default.conf
 COPY app/index.html /var/www/html/index.html
+COPY app/login.html /var/www/html/login.html
 ENTRYPOINT ["/app/start.sh"]
