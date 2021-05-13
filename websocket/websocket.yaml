@@ -31,10 +31,10 @@ spec:
         app: websocket
     spec:
       containers:
-      # Example websocket app running on port 8010
+      # Example websocket app running on port 8010, GITHUB: https://github.com/sashimi3/web-socket-test
       - name: websocket
-        #image: ksdn117/web-socket-test:latest
-        image: customwebsocket:latest
+        image: ksdn117/web-socket-test:latest
+        #image: customwebsocket:latest
         imagePullPolicy: IfNotPresent
         ports:
         - containerPort: 8010
