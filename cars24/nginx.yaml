@@ -1,0 +1,83 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  ports:
+  - name: http
+    port: 80
+    # Target is now sigsci-agent on port 8001
+    targetPort: 80
+  selector:
+    app: nginx-deployment
+  type: LoadBalancer
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-deployment
+  labels:
+    app: nginx-deployment
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nginx-deployment
+  template:
+    metadata:
+      labels:
+        app: nginx-deployment
+    spec:
+      containers:
+      # Example nginx running on port 80
+      - name: nginx
+        image: nginx:latest
+        #image: nginx-native-ubuntu:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - containerPort: 80
+        volumeMounts:
+        # Shared mount with sigsci-agent container where the socket is shared via emptyDir volume
+        - name: sigsci-tmp
+          mountPath: /var/run
+      # Signal Sciences Agent running in default RPC mode
+      - name: sigsci-agent
+        image: signalsciences/sigsci-agent:latest
+        imagePullPolicy: Always
+        env:
+        - name: SIGSCI_ACCESSKEYID
+          valueFrom:
+            secretKeyRef:
+              name: sigsci.helloworldsecret
+              key: accesskeyid
+        - name: SIGSCI_SECRETACCESSKEY
+          valueFrom:
+            secretKeyRef:
+              name: sigsci.helloworldsecret
+              key: secretaccesskey
+        - name: SIGSCI_LOG_OUT
+          value: /sigsci/tmp/agent.log
+        #- name: SIGSCI_DEBUG_LOG_ALL_THE_THINGS
+        #  value: "true"
+        # If required (default is /sigsci/tmp/sigsci.sock for the container)
+        #- name: SIGSCI_RPC_ADDRESS
+        #  value: /path/to/socket for UDS OR host:port if TCP
+        - name: SIGSCI_RPC_ADDRESS
+          value: unix:/var/run/sigsci.sock
+        securityContext:
+          # The sigsci-agent container should run with its root filesystem read only
+          readOnlyRootFilesystem: true
+        volumeMounts:
+        # Default volume mount location for sigsci-agent writeable data
+        # NOTE: Also change `SIGSCI_SHARED_CACHE_DIR` (default `/sigsci/tmp/cache`)
+        #       if mountPath is changed, but best not to change.
+        - name: sigsci-tmp
+          mountPath: /var/run
+          #mountPath: /sigsci/tmp #can use this if remove SIGSCI_RPC_ADDRESS env variable
+      volumes:
+      # Define a volume where sigsci-agent will write temp data and share the socket file,
+      # which is required with the root filesystem is mounted read only
+      - name: sigsci-tmp
+        emptyDir: {}

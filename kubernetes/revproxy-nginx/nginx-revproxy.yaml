@@ -61,6 +61,12 @@ spec:
         # forwarding to the app on 8000 as the upstream
         - name: SIGSCI_REVPROXY_LISTENER
           value: "http:{listener='http://0.0.0.0:8001',upstreams='http://127.0.0.1:80',access-log='/dev/stdout'}"
+        - name: STATSD_HOST
+          valueFrom:
+            fieldRef:
+              fieldPath: status.hostIP
+        - name: SIGSCI_STATSD_ADDRESS
+          value: $(STATSD_HOST):8125
         ports:
         - containerPort: 8001
         securityContext:

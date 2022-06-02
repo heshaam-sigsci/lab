@@ -1,0 +1,3 @@
+docker build --tag=juicejuice <dockerfile folder path>
+
+docker run --name juiceshop -d -p 3000:3000 -e SIGSCI_ACCESSKEYID="f99f90c6-8ff0-44d4-b07d-99af09fc51e1" -e SIGSCI_SECRETACCESSKEY="qNx_vUapXJ6Sk7stwT_igJtLTN3M8uQj_QO9cDhfp9E" -e SIGSCI_HOSTNAME="juiceshop" juicejuice

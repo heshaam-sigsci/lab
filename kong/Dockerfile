@@ -2,6 +2,8 @@ FROM kong
 
 USER root
 
+RUN apk add curl
+
 ## Install Signal Sciences Agent
 RUN curl -O https://dl.signalsciences.net/sigsci-agent/sigsci-agent_latest.tar.gz
 RUN tar -xf sigsci-agent_latest.tar.gz -C /usr/sbin/
